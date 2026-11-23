@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.Test;
 
-import static org.firstinspires.ftc.teamcode.Launcher.Flywheel.targetRPM;
-import static org.firstinspires.ftc.teamcode.Test.IntakeTest.targetVelocity;
+import static org.firstinspires.ftc.teamcode.Launcher.testClasses.FlywheelTest.targetRPM;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -10,13 +9,12 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Core.Logger;
 import org.firstinspires.ftc.teamcode.Core.NewIntakeTransferHWmap;
 import org.firstinspires.ftc.teamcode.Intake.IntakeFSM;
-import org.firstinspires.ftc.teamcode.Launcher.Flywheel;
-import org.firstinspires.ftc.teamcode.Launcher.LauncherServo;
-import org.firstinspires.ftc.teamcode.Launcher.Turret;
+import org.firstinspires.ftc.teamcode.Launcher.testClasses.FlywheelTest;
+import org.firstinspires.ftc.teamcode.Launcher.testClasses.LauncherServoTest;
+import org.firstinspires.ftc.teamcode.Launcher.testClasses.TurretTest;
 import org.firstinspires.ftc.teamcode.Transfer.TransferFSM;
 import org.firstinspires.ftc.teamcode.Transfer.TransferMotorFSM;
 
@@ -30,9 +28,9 @@ import java.util.Date;
 public class LauncherAndIntakeTransferIntegratedTest extends LinearOpMode {
 
     public NewIntakeTransferHWmap hwMap;
-    public Turret turret;
-    public Flywheel flywheel;
-    public LauncherServo launcherServo;
+    public TurretTest turret;
+    public FlywheelTest flywheel;
+    public LauncherServoTest launcherServo;
     public IntakeFSM intakeFSM;
     public TransferFSM transferFSM;
     public TransferMotorFSM transferMotorFSM;
@@ -46,9 +44,9 @@ public class LauncherAndIntakeTransferIntegratedTest extends LinearOpMode {
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         hwMap = new NewIntakeTransferHWmap(hardwareMap);
-        // launcherServo = new LauncherServo(telemetry, hwMap);
-        flywheel = new Flywheel(hwMap, telemetry);
-        // turret = new Turret(hwMap, telemetry);
+        // launcherServo = new LauncherServoTest(telemetry, hwMap);
+        flywheel = new FlywheelTest(hwMap, telemetry);
+        // turret = new TurretTest(hwMap, telemetry);
         gamepad = new GamepadEx(gamepad1);
         logger = new Logger(telemetry);
         transferFSM = new TransferFSM(hwMap, telemetry);

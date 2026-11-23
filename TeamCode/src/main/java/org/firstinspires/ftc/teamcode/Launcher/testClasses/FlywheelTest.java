@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Launcher;
+package org.firstinspires.ftc.teamcode.Launcher.testClasses;
 
 import com.acmerobotics.dashboard.config.Config;
 
@@ -7,10 +7,10 @@ import org.firstinspires.ftc.teamcode.Core.HWMap;
 import org.firstinspires.ftc.teamcode.Core.MotorWrapper;
 import org.firstinspires.ftc.teamcode.Core.NewIntakeTransferHWmap;
 
-import java.io.Writer;
+//CHANGE TO FSM LATER
 
 @Config
-public class Flywheel {
+public class FlywheelTest {
 
     public static double kS = 0, kA = 0, kV = 2.6;
     public static double vF = 0.03, vP = 4, vI = 5, vD = 0;
@@ -19,12 +19,12 @@ public class Flywheel {
     private final MotorWrapper flywheelmotor;
     Telemetry telemetry;
 
-    public Flywheel(NewIntakeTransferHWmap hwMap, Telemetry telemetry) {
+    public FlywheelTest(NewIntakeTransferHWmap hwMap, Telemetry telemetry) {
         flywheelmotor = new MotorWrapper(hwMap.getFlywheelMotor(), true, 1, false);
         this.telemetry = telemetry;
     }
 
-    public Flywheel(HWMap hwMap, Telemetry telemetry) {
+    public FlywheelTest(HWMap hwMap, Telemetry telemetry) {
         flywheelmotor = new MotorWrapper(hwMap.getFlywheelMotor(), true, 1, false);
         this.telemetry = telemetry;
     }

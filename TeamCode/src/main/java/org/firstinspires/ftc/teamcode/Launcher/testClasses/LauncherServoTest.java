@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Launcher;
+package org.firstinspires.ftc.teamcode.Launcher.testClasses;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.normalizeDegrees;
 
@@ -10,10 +10,11 @@ import com.arcrobotics.ftclib.controller.PIDFController;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Core.HWMap;
 import org.firstinspires.ftc.teamcode.Core.NewAxonServo;
-import org.firstinspires.ftc.teamcode.Core.NewIntakeTransferHWmap;
+
+//CHANGE TO FSM LATER
 
 @Config
-public class LauncherServo {
+public class LauncherServoTest {
 
     HWMap hwMap;
     private NewAxonServo pitchServo;
@@ -28,7 +29,7 @@ public class LauncherServo {
     public static double LOWER_HARD_STOP = 10;
     Telemetry telemetry;
 
-    public LauncherServo(Telemetry telemetry,  HWMap hwMap) {
+    public LauncherServoTest(Telemetry telemetry,  HWMap hwMap) {
         pitchServo = new NewAxonServo(hwMap.getPitchServo(), hwMap.getPitchEncoder(), false, false, 0, gearRatio);
         this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         pidfController = new PIDFController(P, I, D, F);

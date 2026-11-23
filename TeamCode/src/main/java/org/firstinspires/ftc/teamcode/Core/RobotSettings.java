@@ -12,22 +12,55 @@ import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 
+//odo offsets: (horizontal: 150.781mm, vertical: 43.563mm),
+//center of robot to center line: 187.176 + 220
+//center of robot to the wall: 260.35474
+//middle of frame to middle of cell: 323.85mm
+//pivot to middle of cell: 509.501mm
+
+// inches, 0,0 = field center, +X away from the audience, +Y toward red, heading 0 = facing the back wall
 @Config
 public class RobotSettings {
+    public static double HIVE_Y = 12.75;
+    public static double CELL_X = 12.6;
+
+    public static double ROBOT_HALF_LENGTH = 10.25;
+    public static double START_Y = 24;
+    public static double START_HEADING = 180;
+
     public enum Alliance {
-        RED(new Pose2D(DistanceUnit.METER, -1.432, 1.5, AngleUnit.DEGREES, 136.4)),
-        BLUE(new Pose2D(DistanceUnit.METER, -1.432, -1.5, AngleUnit.DEGREES, 223.6));
+        RED(1, Cell.AUDIENCE_SIDE),
+        BLUE(-1, Cell.FAR_SIDE);
 
-        private Pose2D pose2D;
+        private final int side;
+        private final Cell startUpCell;
 
-        Alliance(Pose2D pos) {
-            this.pose2D = pos;
+        Alliance(int side, Cell startUpCell) {
+            this.side = side;
+            this.startUpCell = startUpCell;
+        }
+
+        public Pose2D getCell(Cell cell) {
+            double x = cell == Cell.AUDIENCE_SIDE ? -CELL_X : CELL_X;
+            return new Pose2D(DistanceUnit.INCH, x, side * HIVE_Y, AngleUnit.DEGREES, 0);
+        }
+
+        public Cell startUpCell() {
+            return startUpCell;
         }
 
         public Pose2D getGoalPos() {
-            return pose2D;
+            return getCell(startUpCell);
+        }
+    }
+
+    public enum Cell {
+        AUDIENCE_SIDE,
+        FAR_SIDE;
+
+        public Cell other() {
+            return this == AUDIENCE_SIDE ? FAR_SIDE : AUDIENCE_SIDE;
         }
     }
 
@@ -38,19 +71,32 @@ public class RobotSettings {
     }
 
     public enum StartPos {
-        CLOSE_RED(new Pose2D(DistanceUnit.METER, -1.419, 1.224, AngleUnit.DEGREES, 40.4)),
-        FAR_RED(new Pose2D(DistanceUnit.METER, 1.64, 0.44, AngleUnit.DEGREES, 90)),
-        CLOSE_BLUE(new Pose2D(DistanceUnit.METER, -1.419, -1.224, AngleUnit.DEGREES, 319.6)),
-        FAR_BLUE((new Pose2D(DistanceUnit.METER, 1.64, -0.16, AngleUnit.DEGREES, 180)));
+        RED_AUDIENCE_WALL(Alliance.RED),
+        BLUE_BACK_WALL(Alliance.BLUE);
 
-        private Pose2D pose2D;
+        private final Alliance alliance;
 
-        StartPos(Pose2D pos) {
-            this.pose2D = pos;
+        StartPos(Alliance alliance) {
+            this.alliance = alliance;
+        }
+
+        public Alliance getAlliance() {
+            return alliance;
         }
 
         public Pose2D getPose2D() {
-            return pose2D;
+            double x = 72 - ROBOT_HALF_LENGTH;
+            if (alliance == Alliance.RED) {
+                return new Pose2D(DistanceUnit.INCH, -x, START_Y, AngleUnit.DEGREES, START_HEADING);
+            }
+            return new Pose2D(DistanceUnit.INCH, x, -START_Y, AngleUnit.DEGREES, AngleUnit.normalizeDegrees(START_HEADING + 180));
+        }
+
+        public static StartPos forAlliance(Alliance alliance) {
+            for (StartPos pos : values()) {
+                if (pos.alliance == alliance) return pos;
+            }
+            return RED_AUDIENCE_WALL;
         }
     }
 
@@ -60,34 +106,36 @@ public class RobotSettings {
 
     private static final String FILENAME = "RobotSettings.json";
 
-    // Writes file
+    public RobotSettings() {
+        alliance = Alliance.RED;
+        distanceMethod = DistanceMethod.PINPOINT_ONLY;
+        startPosState = StartPos.RED_AUDIENCE_WALL;
+    }
+
     public void save() {
         File file = AppUtil.getInstance().getSettingsFile(FILENAME);
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try (FileWriter writer = new FileWriter(file)) {
             gson.toJson(this, writer);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // reads file and loads into program
-    // TODO: add a safety condition here it self so no null object refs
     public static RobotSettings load() {
+        RobotSettings defaults = new RobotSettings();
         File file = AppUtil.getInstance().getSettingsFile(FILENAME);
-        Gson gson = new Gson();
         try (FileReader reader = new FileReader(file)) {
-            return gson.fromJson(reader, RobotSettings.class);
-        } catch (IOException e) {
-            // If file not found or error, return default settings
-            return new RobotSettings();
+            RobotSettings loaded = new Gson().fromJson(reader, RobotSettings.class);
+            if (loaded == null) return defaults;
+            if (loaded.alliance == null) loaded.alliance = defaults.alliance;
+            if (loaded.distanceMethod == null) loaded.distanceMethod = defaults.distanceMethod;
+            if (loaded.startPosState == null || loaded.startPosState.getAlliance() != loaded.alliance) {
+                loaded.startPosState = StartPos.forAlliance(loaded.alliance);
+            }
+            return loaded;
+        } catch (Exception e) {
+            return defaults;
         }
     }
-
-    public RobotSettings() {
-        alliance = Alliance.RED;
-        distanceMethod = DistanceMethod.LIMELIGHT_ONLY;
-        startPosState = StartPos.CLOSE_RED;
-    }
-
 }

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Launcher;
+package org.firstinspires.ftc.teamcode.Launcher.testClasses;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
@@ -7,11 +7,12 @@ import com.arcrobotics.ftclib.util.Timing;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Core.HWMap;
 import org.firstinspires.ftc.teamcode.Core.MotorWrapper;
-import org.firstinspires.ftc.teamcode.Core.NewIntakeTransferHWmap;
+
+//CHANGE TO FSM LATER
 
 import java.util.concurrent.TimeUnit;
 @Config
-public class Turret {
+public class TurretTest {
     HWMap hwMap;
     MotorWrapper turretMotor;
     public static double targetAngle;
@@ -21,7 +22,7 @@ public class Turret {
     public static double P_Counter = 0.04;
     public static double P_clock = 0.02;
     public static double P = 0.01, I = 0.0, D = 0, F = 0.2;
-    public static double gearRatio = 16.0 / 109.0;
+    public static double gearRatio = 3.0 / 29.0;
 
     public static double UPPER_HARD_STOP = 0;
     public static double LOWER_HARD_STOP = -90;
@@ -32,7 +33,7 @@ public class Turret {
     Timing.Timer timer;
     public static long sleepTime = 45;
 
-    public Turret( HWMap hwMap, Telemetry telemetry) {
+    public TurretTest( HWMap hwMap, Telemetry telemetry) {
         timer = new Timing.Timer(3000000, TimeUnit.MILLISECONDS);
         turretMotor = new MotorWrapper(hwMap.getTurretMotor(), false, gearRatio, false);
         turretMotor.resetEncoder();
@@ -69,13 +70,13 @@ public class Turret {
             power = signPower * POWER_CAP;
         }
 
-        telemetry.addData("turret target angle", targetAngle);
-        telemetry.addData("Turret motor target Angle", targetAngle * (109.0 / 16.0));
-        telemetry.addData("turret motor current angle", turretMotor.getAngle());
-        telemetry.addData("turret current angle", turretMotor.getScaledPos());
-        telemetry.addData("TIcks per rev", turretMotor.getTicksPerRev());
-        telemetry.addData("Curret Pos ticks", turretMotor.readandGetPosTicks());
-        telemetry.addData("loop time", timer.elapsedTime());
+        telemetry.addData("Turret Target Angle", targetAngle);
+        telemetry.addData("Turret Motor Target Angle", targetAngle * (109.0 / 16.0));
+        telemetry.addData("Turret Motor Current Angle", turretMotor.getAngle());
+        telemetry.addData("Turret Current Angle", turretMotor.getScaledPos());
+        telemetry.addData("Ticks Per Rev", turretMotor.getTicksPerRev());
+        telemetry.addData("Current Pos Ticks", turretMotor.readandGetPosTicks());
+        telemetry.addData("Loop Time", timer.elapsedTime());
 
         turretMotor.set(power);
     }

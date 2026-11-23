@@ -24,7 +24,7 @@ public class HWMap {
     private final MotorEx turretMotor;
     private final CRServo pitchServo;
     private final AnalogInput pitchEncoder;
-    private final Limelight3A limelight;
+    // private final Limelight3A limelight;
 
     //intake
     private final MotorEx intakeMotor;
@@ -64,26 +64,18 @@ public class HWMap {
         pitchServo = new CRServo(hardwareMap, "PS");
         pitchEncoder = hardwareMap.get(AnalogInput.class, "PE");
         transferEncoder = hardwareMap.get(AnalogInput.class, "TE");
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+    //    limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         intakeMotor = new MotorEx(hardwareMap, "IM", Motor.GoBILDA.RPM_1150);
         transferServo = hardwareMap.get(Servo.class, "TS");
         transferMotor = new MotorEx(hardwareMap, "TRM", Motor.GoBILDA.RPM_312);
+
 
         FLM = hardwareMap.get(DcMotorEx.class, "FLM");
         FRM = hardwareMap.get(DcMotorEx.class, "FRM");
         BLM = hardwareMap.get(DcMotorEx.class, "BLM");
         BRM = hardwareMap.get(DcMotorEx.class, "BRM");
 
-        FLS = hardwareMap.get(CRServoImplEx.class, "FLS");
-        FRS = hardwareMap.get(CRServoImplEx.class, "FRS");
-        BLS = hardwareMap.get(CRServoImplEx.class, "BLS");
-        BRS = hardwareMap.get(CRServoImplEx.class, "BRS");
-
-        FLE = hardwareMap.get(AnalogInput.class, "FLE");
-        FRE = hardwareMap.get(AnalogInput.class, "FRE");
-        BLE = hardwareMap.get(AnalogInput.class, "BLE");
-        BRE = hardwareMap.get(AnalogInput.class, "BRE");
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
@@ -93,9 +85,10 @@ public class HWMap {
         return transferMotor;
     }
 
-    public Limelight3A getLimelight() {
+    /*public Limelight3A getLimelight() {
         return limelight;
     }
+    */
 
     public MotorEx getFlywheelMotor() {
         return flywheelMotor;

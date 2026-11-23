@@ -26,10 +26,7 @@ public class Logger {
     public void log(String caption, Object data, LogLevels logLevel) {
         switch (state) {
             case DEBUG:
-                if (!(logLevel == LogLevels.PRODUCTION)) {
-                    telemetry.addData(caption, data);
-
-                }
+                telemetry.addData(caption, data);
                 break;
             case PRODUCTION:
                 if (logLevel == LogLevels.PRODUCTION) {
@@ -61,6 +58,6 @@ public class Logger {
     }
 
     public boolean PRODUCTION() {
-        return state == LogLevels.DEBUG;
+        return state == LogLevels.PRODUCTION;
     }
 }
