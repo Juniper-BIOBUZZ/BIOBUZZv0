@@ -1,81 +1,221 @@
+
 package org.firstinspires.ftc.teamcode.Test;
 
-import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
 import org.firstinspires.ftc.teamcode.Core.Drivetrain;
 import org.firstinspires.ftc.teamcode.Core.MechanumHardwareMap;
 import org.firstinspires.ftc.teamcode.Core.Pinpoint;
-
-/*
- * Pinpoint offset test:
- *   keep the robot still, init, wait a second, then start
- *   press Cross to zero x / y / heading
- *   use the right stick to spin the robot in place half a turn (heading about 180), then stop
- *   if X moved, change the Y offset (dpad up/down), if Y moved, change the X offset (dpad left/right)
- *   it moves about twice the offset error, so change the offset by about half of how far it moved
- *   if a change makes it worse, go the other way
- *   press Cross again and repeat until X and Y stay within about half an inch after the half turn
- *   hold L1 to change by 1 mm instead of 5 mm
- *   then send the X and Y offsets
- */
+import org.firstinspires.ftc.teamcode.Core.RobotSettings;
 
 @TeleOp(group = "Drivetrain", name = "Pinpoint")
 public class PinpointTest extends LinearOpMode {
 
-    private double xOffsetMm = Pinpoint.Xoffset * 25.4;
-    private double yOffsetMm = Pinpoint.YOffset * 25.4;
-
     @Override
     public void runOpMode() {
-        MechanumHardwareMap mechanumHardwareMap = new MechanumHardwareMap(hardwareMap);
-        Pinpoint pinpoint = new Pinpoint(mechanumHardwareMap);
-        GoBildaPinpointDriver odo = mechanumHardwareMap.getOdo();
-        Drivetrain drivetrain = new Drivetrain(telemetry, gamepad1, mechanumHardwareMap);
-        odo.setOffsets(xOffsetMm, yOffsetMm, DistanceUnit.MM);
 
-        boolean lastCross = false, lastUp = false, lastDown = false, lastLeft = false, lastRight = false;
+        telemetry = new MultipleTelemetry(
+                telemetry,
+                FtcDashboard.getInstance().getTelemetry()
+        );
 
+        RobotSettings settings = RobotSettings.load();
+
+        MechanumHardwareMap hwMap =
+                new MechanumHardwareMap(hardwareMap);
+
+        Pinpoint pinpoint = new Pinpoint(hwMap);
+        double startHeading =
+                settings.alliance == RobotSettings.Alliance.RED
+                        ? 180 : 0;
+
+        pinpoint.setPosition(
+                new Pose2D(
+                        DistanceUnit.INCH,
+                        0,
+                        0,
+                        AngleUnit.DEGREES,
+                        startHeading
+                )
+        );
+        double allianceForward =
+                settings.alliance == RobotSettings.Alliance.RED
+                        ? -90 : 90;
+
+        final double[] driveHeading = {startHeading};
+        double headingOffset = 0;
+
+        Drivetrain drivetrain = new Drivetrain(
+                telemetry,
+                gamepad1,
+                hwMap,
+                () -> driveHeading[0],
+                settings.alliance
+        );
+
+        drivetrain.setFieldCentric(true);
         while (opModeInInit()) {
+
             pinpoint.update();
-            telemetry.addData("Status", pinpoint.getStatus());
+
+            telemetry.addData("Alliance", settings.alliance);
+            telemetry.addData("Fixed driver forward",
+                    "%.0f deg", allianceForward);
+
+            telemetry.addData("X (in)",
+                    "%.2f", pinpoint.getX());
+            telemetry.addData("Y (in)",
+                    "%.2f", pinpoint.getY());
+            telemetry.addData("Heading (deg)",
+                    "%.2f", pinpoint.getHeading());
+
+            telemetry.addData("isPinpointReady",
+                    "READY".equals(pinpoint.getStatus()));
+
+            telemetry.addData("Pinpoint status",
+                    pinpoint.getStatus());
+
+            telemetry.addData("Start pose set",
+                    pinpoint.positionSet());
+
             telemetry.update();
+            idle();
         }
 
-        while (opModeIsActive()) {
-            pinpoint.update();
+        if (isStopRequested()) return;
 
-            double step = gamepad1.left_bumper ? 1 : 5;
-            boolean changed = false;
-            if (gamepad1.dpad_right && !lastRight) { xOffsetMm += step; changed = true; }
-            if (gamepad1.dpad_left && !lastLeft) { xOffsetMm -= step; changed = true; }
-            if (gamepad1.dpad_up && !lastUp) { yOffsetMm += step; changed = true; }
-            if (gamepad1.dpad_down && !lastDown) { yOffsetMm -= step; changed = true; }
-            if (changed) odo.setOffsets(xOffsetMm, yOffsetMm, DistanceUnit.MM);
-            if (gamepad1.a && !lastCross) {
-                odo.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0));
+        boolean lastOptions = false;
+
+        try {
+            while (opModeIsActive()) {
+
+                pinpoint.update();
+
+                boolean isPinpointReady =
+                        "READY".equals(pinpoint.getStatus());
+
+                boolean valid =
+                        isPinpointReady
+                                && pinpoint.positionSet()
+                                && Double.isFinite(pinpoint.getX())
+                                && Double.isFinite(pinpoint.getY())
+                                && Double.isFinite(pinpoint.getHeading());
+                if (valid) {
+                    driveHeading[0] =
+                            AngleUnit.normalizeDegrees(
+                                    pinpoint.getHeading()
+                                            + headingOffset
+                            );
+                }
+                if (gamepad1.dpad_up) {
+                    drivetrain.setFieldCentric(true);
+                }
+
+                if (gamepad1.dpad_down) {
+                    drivetrain.setFieldCentric(false);
+                }
+                boolean options = gamepad1.start;
+
+                if (valid && options && !lastOptions) {
+
+                    headingOffset =
+                            AngleUnit.normalizeDegrees(
+                                    allianceForward
+                                            - pinpoint.getHeading()
+                            );
+
+                    driveHeading[0] = allianceForward;
+                }
+
+                lastOptions = options;
+
+
+                if (valid || !drivetrain.isFieldCentric()) {
+                    drivetrain.update();
+                    hwMap.getFrontLeftMotor().setPower(
+                            hwMap.getFrontLeftMotor().getPower() * 0.5);
+
+                    hwMap.getFrontRightMotor().setPower(
+                            hwMap.getFrontRightMotor().getPower() * 0.5);
+
+                    hwMap.getBackLeftMotor().setPower(
+                            hwMap.getBackLeftMotor().getPower() * 0.5);
+
+                    hwMap.getBackRightMotor().setPower(
+                            hwMap.getBackRightMotor().getPower() * 0.5);
+
+                } else {
+                    stopDrive(hwMap);
+                }
+
+                telemetry.addData("Alliance",
+                        settings.alliance);
+
+                telemetry.addData("Fixed driver forward",
+                        "%.0f deg", allianceForward);
+
+                telemetry.addData("X (in)",
+                        "%.2f", pinpoint.getX());
+
+                telemetry.addData("Y (in)",
+                        "%.2f", pinpoint.getY());
+
+                telemetry.addData("Heading (deg)",
+                        "%.2f", pinpoint.getHeading());
+
+                telemetry.addData("isPinpointReady",
+                        isPinpointReady);
+
+                telemetry.addData("Pinpoint status",
+                        pinpoint.getStatus());
+
+                telemetry.addData("Start pose set",
+                        pinpoint.positionSet());
+
+                telemetry.addData("Pinpoint valid",
+                        valid);
+
+                telemetry.addData("Bad reads",
+                        pinpoint.getBadReads());
+
+                telemetry.addData("Jump count",
+                        pinpoint.getJumpCount());
+
+                telemetry.addData("Last jump",
+                        pinpoint.getLastJump());
+
+                telemetry.addData("Drive heading",
+                        "%.2f", driveHeading[0]);
+
+                telemetry.addData("Heading offset",
+                        "%.2f", headingOffset);
+
+                telemetry.addData("Drive mode",
+                        drivetrain.isFieldCentric()
+                                ? "FIELD CENTRIC"
+                                : "ROBOT CENTRIC");
+
+                telemetry.update();
             }
-            lastCross = gamepad1.a;
-            lastUp = gamepad1.dpad_up;
-            lastDown = gamepad1.dpad_down;
-            lastLeft = gamepad1.dpad_left;
-            lastRight = gamepad1.dpad_right;
 
-            drivetrain.update();
-
-            telemetry.addData("Status", pinpoint.getStatus());
-            telemetry.addData("X offset mm (dpad L/R)", String.format("%.1f", xOffsetMm));
-            telemetry.addData("Y offset mm (dpad up/down)", String.format("%.1f", yOffsetMm));
-            telemetry.addData("X pos", String.format("%.2f", pinpoint.getX()));
-            telemetry.addData("Y pos", String.format("%.2f", pinpoint.getY()));
-            telemetry.addData("Heading", String.format("%.1f", pinpoint.getHeading()));
-            telemetry.addData("Raw x encoder", odo.getEncoderX());
-            telemetry.addData("Raw y encoder", odo.getEncoderY());
-            telemetry.update();
+        } finally {
+            stopDrive(hwMap);
         }
+    }
+
+    private void stopDrive(MechanumHardwareMap hwMap) {
+
+        hwMap.getFrontLeftMotor().setPower(0);
+        hwMap.getFrontRightMotor().setPower(0);
+        hwMap.getBackLeftMotor().setPower(0);
+        hwMap.getBackRightMotor().setPower(0);
     }
 }

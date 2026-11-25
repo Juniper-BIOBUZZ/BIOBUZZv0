@@ -22,12 +22,12 @@ public class TurretTest {
     public static double P_Counter = 0.04;
     public static double P_clock = 0.02;
     public static double P = 0.01, I = 0.0, D = 0, F = 0.2;
-    public static double gearRatio = 3.0 / 29.0;
+    public static double gearRatio = 13.0 / 65.0;
 
     public static double UPPER_HARD_STOP = 0;
-    public static double LOWER_HARD_STOP = -90;
+    public static double LOWER_HARD_STOP = -265;
 
-    public static double POWER_CAP = 1;
+    public static double POWER_CAP = 0.25;
     Telemetry telemetry;
 
     Timing.Timer timer;

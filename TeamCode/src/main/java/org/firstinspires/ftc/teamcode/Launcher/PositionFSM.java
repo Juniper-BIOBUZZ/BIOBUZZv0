@@ -33,7 +33,7 @@ public class PositionFSM {
 
     public static final double[] DISTANCES = {25, 31, 38, 45, 50, 60};
     public static final double[] RPMS = {1400, 1450, 1475, 1475, 1500, 1500};
-    public static final double[] HOOD_ANGLES = {0, 3, 9, 9, 10, 11};
+    public static final double[] HOOD_POSITIONS = {0.000, 0.100, 0.300, 0.300, 0.333, 0.367};
 
     private final Pinpoint pinpoint;
     private final Logger logger;
@@ -70,8 +70,8 @@ public class PositionFSM {
     }
 
     public void buildMaps() {
-        if (DISTANCES.length < 2 || DISTANCES.length != RPMS.length || DISTANCES.length != HOOD_ANGLES.length) {
-            throw new IllegalArgumentException("PositionFSM tables need at least 2 points and the same number of distances, rpms and hood angles");
+        if (DISTANCES.length < 2 || DISTANCES.length != RPMS.length || DISTANCES.length != HOOD_POSITIONS.length) {
+            throw new IllegalArgumentException("PositionFSM tables need at least 2 points and the same number of distances, rpms and hood positions");
         }
         for (int i = 1; i < DISTANCES.length; i++) {
             if (DISTANCES[i] <= DISTANCES[i - 1]) {
@@ -83,7 +83,7 @@ public class PositionFSM {
         hoodMap = new InterpLUT();
         for (int i = 0; i < DISTANCES.length; i++) {
             rpmMap.add(DISTANCES[i], RPMS[i]);
-            hoodMap.add(DISTANCES[i], HOOD_ANGLES[i]);
+            hoodMap.add(DISTANCES[i], HOOD_POSITIONS[i]);
         }
         rpmMap.createLUT();
         hoodMap.createLUT();
@@ -280,6 +280,6 @@ public class PositionFSM {
         logger.log("Goal x / y", String.format("%.1f / %.1f", goalX, goalY), Logger.LogLevels.DEBUG);
         logger.log("Goal bearing (robot)", String.format("%.1f", robotBearing), Logger.LogLevels.DEBUG);
         logger.log("Turret target from position", String.format("%.1f", turretTarget), Logger.LogLevels.DEBUG);
-        logger.log("Table RPM / hood", String.format("%.0f / %.1f", targetRPM, hoodTarget), Logger.LogLevels.DEBUG);
+        logger.log("Table RPM / hood", String.format("%.0f / %.3f", targetRPM, hoodTarget), Logger.LogLevels.DEBUG);
     }
 }

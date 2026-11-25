@@ -37,8 +37,8 @@ public class Pinpoint {
     public double x;
     public double y;
     public double heading;
-    public static double Xoffset = -6.30;
-    public static double YOffset = -0.55;
+    public static double Xoffset = -147.088;
+    public static double YOffset = 38.9;
 
 
 /*    Pose convertedPose = new Pose(
@@ -51,9 +51,9 @@ public class Pinpoint {
 
     public Pinpoint(MechanumHardwareMap mechanumHardwareMap) {
         odo = mechanumHardwareMap.getOdo();
-        odo.setOffsets(Xoffset, YOffset, DistanceUnit.INCH);
+        odo.setOffsets(Xoffset, YOffset, DistanceUnit.MM);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         robotSettings = RobotSettings.load();
         odo.resetPosAndIMU();
         sinceInit.reset();

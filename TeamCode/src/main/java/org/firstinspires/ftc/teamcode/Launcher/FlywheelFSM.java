@@ -7,8 +7,6 @@ import org.firstinspires.ftc.teamcode.Core.HWMap;
 import org.firstinspires.ftc.teamcode.Core.Logger;
 import org.firstinspires.ftc.teamcode.Core.MotorWrapper;
 
-// ftclib velocity control, same gains as FlywheelTest
-// ftclib aims for BUFFER * target, so if the rpm sits below the target raise kV (or set BUFFER to 1)
 @Config
 public class FlywheelFSM {
     public enum State {

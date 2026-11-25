@@ -34,9 +34,6 @@ public class TurretFSM {
     public static double MIN_SLOW_POWER = 0.1;
     public static double LOOKAHEAD_S = 0.1;
 
-    public static double CHECK_POWER = 0.3;
-    public static int STUCK_LOOPS = 3;
-
     public static double POWER_SLEW = 4.0;
     private static final double MAX_SLEW_DT = 0.05;
 
@@ -48,8 +45,7 @@ public class TurretFSM {
     private State state = State.ALIGNING;
     private double target = 0;
     private double currentPos = 0, velocity = 0, predictedPos = 0;
-    private double lastPower = 0, lastTicks = 0;
-    private int stuckCount = 0;
+    private double lastPower = 0;
     private String faultReason = "none";
     private String limitedBy = "none";
 
@@ -60,7 +56,6 @@ public class TurretFSM {
         turretMotor = new MotorWrapper(hwMap.getTurretMotor(), false, gearRatio, false);
         turretMotor.resetEncoder();
         turretMotor.set(0);
-        lastTicks = turretMotor.readandGetPosTicks();
         pid = new PIDController(P, I, D);
         loopTimer.reset();
     }
@@ -96,7 +91,6 @@ public class TurretFSM {
         if (!trackingValid) {
             turretMotor.set(0);
             lastPower = 0;
-            stuckCount = 0;
             pid.reset();
             limitedBy = "tracking lost";
             if (state != State.FAULTED) state = State.ALIGNING;
@@ -129,17 +123,6 @@ public class TurretFSM {
         if (currentPos > MAX_ANGLE + FAULT_MARGIN || currentPos < MIN_ANGLE - FAULT_MARGIN) {
             fault(String.format("past limit at %.1f", currentPos));
         }
-
-        double ticks = turretMotor.readandGetPosTicks();
-        if (Math.abs(lastPower) >= CHECK_POWER && ticks == lastTicks) {
-            stuckCount++;
-            if (stuckCount >= STUCK_LOOPS) {
-                fault(String.format("encoder not moving at power %.2f", lastPower));
-            }
-        } else {
-            stuckCount = 0;
-        }
-        lastTicks = ticks;
     }
 
     private double applyHardstops(double requested, double dt) {
@@ -222,6 +205,7 @@ public class TurretFSM {
         logger.log("Turret target angle", String.format("%.1f", target), Logger.LogLevels.PRODUCTION);
         logger.log("Turret current angle", String.format("%.1f", currentPos), Logger.LogLevels.PRODUCTION);
         logger.log("Turret velocity", String.format("%.1f", velocity), Logger.LogLevels.DEBUG);
+        logger.log("Turret ACTUAL motor power", String.format("%.2f", turretMotor.get()), Logger.LogLevels.DEBUG);
         logger.log("Turret power", String.format("%.2f", lastPower), Logger.LogLevels.DEBUG);
         logger.log("Turret limited by", limitedBy, Logger.LogLevels.DEBUG);
     }

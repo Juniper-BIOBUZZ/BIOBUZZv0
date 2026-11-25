@@ -22,7 +22,7 @@ public class HWMap {
     // shooter
     private final MotorEx flywheelMotor;
     private final MotorEx turretMotor;
-    private final CRServo pitchServo;
+    private final Servo pitchServo;
     private final AnalogInput pitchEncoder;
     // private final Limelight3A limelight;
 
@@ -61,7 +61,7 @@ public class HWMap {
         flywheelMotor = new MotorEx(hardwareMap, "FM", Motor.GoBILDA.BARE);
         flywheelMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         turretMotor = new MotorEx(hardwareMap, "TM", Motor.GoBILDA.RPM_1150); // TODO: get right RPM
-        pitchServo = new CRServo(hardwareMap, "PS");
+        pitchServo = hardwareMap.get(Servo.class, "PS");
         pitchEncoder = hardwareMap.get(AnalogInput.class, "PE");
         transferEncoder = hardwareMap.get(AnalogInput.class, "TE");
     //    limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -98,7 +98,7 @@ public class HWMap {
         return turretMotor;
     }
 
-    public CRServo getPitchServo() {
+    public Servo getPitchServo() {
         return pitchServo;
     }
 

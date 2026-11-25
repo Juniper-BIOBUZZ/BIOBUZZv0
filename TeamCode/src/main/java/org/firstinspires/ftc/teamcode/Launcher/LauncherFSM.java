@@ -55,26 +55,20 @@ public class LauncherFSM {
 
         if (trackingValid) {
             turretFSM.setTargetAngle(positionFSM.getTurretTarget());
-            pitchFSM.setTargetAngle(hood);
+            pitchFSM.setTargetPosition(hood);
         }
 
         turretFSM.updateState(trackingValid);
         pitchFSM.updateState();
 
         boolean faulted = turretFSM.FAULTED() || pitchFSM.FAULTED();
-        flywheelFSM.setTargetRPM(enabled && !faulted && trackingValid ? rpm : 0);
+        flywheelFSM.setTargetRPM(!faulted ? rpm : 0);
         flywheelFSM.updateState();
 
         if (faulted) {
             setState(State.FAULTED);
             return;
         }
-
-        if (!enabled) {
-            setState(State.OFF);
-            return;
-        }
-
         if (!trackingValid) {
             setState(State.AIMING);
             return;

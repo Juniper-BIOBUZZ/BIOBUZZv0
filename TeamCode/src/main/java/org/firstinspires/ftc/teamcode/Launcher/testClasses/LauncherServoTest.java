@@ -1,57 +1,47 @@
 package org.firstinspires.ftc.teamcode.Launcher.testClasses;
 
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.normalizeDegrees;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.controller.PIDFController;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Core.AxonServoModeWrapper;
 import org.firstinspires.ftc.teamcode.Core.HWMap;
-import org.firstinspires.ftc.teamcode.Core.NewAxonServo;
-
-//CHANGE TO FSM LATER
 
 @Config
 public class LauncherServoTest {
 
-    HWMap hwMap;
-    private NewAxonServo pitchServo;
-    public static double targetAngle;
+    private final AxonServoModeWrapper pitchServo;
 
-    private PIDFController pidfController;
-    public static double TOLERANCE = 1;
-    public static double P = 0.1, I = 0, D = 0, F = 0;
-    public static double gearRatio = 1.0 / 12.0;
+    public static double targetPosition = 0.30;
+    public static boolean INVERT_POSITION = false;
+    public static boolean INVERT_ENCODER = false;
+    public static double ENCODER_OFFSET = 0.0;
 
-    public static double UPPER_HARD_STOP = 29;
-    public static double LOWER_HARD_STOP = 10;
-    Telemetry telemetry;
+    private final Telemetry telemetry;
 
-    public LauncherServoTest(Telemetry telemetry,  HWMap hwMap) {
-        pitchServo = new NewAxonServo(hwMap.getPitchServo(), hwMap.getPitchEncoder(), false, false, 0, gearRatio);
-        this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        pidfController = new PIDFController(P, I, D, F);
-        pidfController.setTolerance(TOLERANCE);
+    public LauncherServoTest(Telemetry telemetry, HWMap hwMap) {
+        this.telemetry = new MultipleTelemetry(
+                telemetry,
+                FtcDashboard.getInstance().getTelemetry()
+        );
+
+        pitchServo = new AxonServoModeWrapper(
+                hwMap.getPitchServo(),
+                hwMap.getPitchEncoder(),
+                INVERT_POSITION,
+                INVERT_ENCODER,
+                ENCODER_OFFSET
+        );
     }
 
     public void updatePID() {
-        if (targetAngle > UPPER_HARD_STOP) {
-            targetAngle = UPPER_HARD_STOP;
-        } else if (targetAngle < LOWER_HARD_STOP) {
-            targetAngle = LOWER_HARD_STOP;
-        }
-        pidfController.setPIDF(P, I, D, F);
-        pidfController.setTolerance(TOLERANCE);
+        pitchServo.setPosition(targetPosition);
         pitchServo.readPos();
 
-        double error = targetAngle - pitchServo.getScaledPos();
-        double power = pidfController.calculate(pitchServo.getScaledPos(), targetAngle);
-
-        pitchServo.set(power);
-
-        telemetry.addData("error", error);
-        telemetry.addData("power", power);
+        telemetry.addData("Pitch target position", "%.3f", targetPosition);
+        telemetry.addData("Pitch commanded position", "%.3f", pitchServo.getPosition());
+        telemetry.addData("Pitch encoder angle", "%.1f", pitchServo.getServoAngle());
+        telemetry.addData("Pitch encoder voltage", "%.3f", pitchServo.readAndGetVoltage());
     }
 }

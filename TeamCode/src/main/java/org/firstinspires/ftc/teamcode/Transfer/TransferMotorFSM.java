@@ -29,7 +29,7 @@ public class TransferMotorFSM {
     public State State;
 
     public TransferMotorFSM(NewIntakeTransferHWmap hwMap, Telemetry telemetry) {
-        transferMotor = new MotorWrapper(hwMap.getTransferMotor(), false, 1, false);
+        transferMotor = new MotorWrapper(hwMap.getTransferMotor(), true, 1, false);
         this.telemetry = telemetry;
         State = State.INTAKING;
     }

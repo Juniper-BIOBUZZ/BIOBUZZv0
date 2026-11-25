@@ -20,6 +20,7 @@ import java.io.FileWriter;
 //pivot to middle of cell: 509.501mm
 
 // inches, 0,0 = field center, +X away from the audience, +Y toward red, heading 0 = facing the back wall
+
 @Config
 public class RobotSettings {
     public static double HIVE_Y = 12.75;
