@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.Locale;
 
 @Config
-@TeleOp(group = "Launcher", name = "Integrated Mechanism Tuning")
+@TeleOp(group = "Launcher", name = "Interpolation Test")
 public class IntegratedMechanismTuningTest extends LinearOpMode {
 
     public static boolean ARM = false;
@@ -44,6 +44,11 @@ public class IntegratedMechanismTuningTest extends LinearOpMode {
     public static double PITCH_TARGET_POSITION = 0.0;
     public static double PITCH_MIN_POSITION = 0.0;
     public static double PITCH_MAX_POSITION = 1.0;
+
+    public static boolean ENABLE_PITCH_COMPENSATION = false;
+    public static double FLYWHEEL_ERROR_THRESHOLD = 40;
+    public static double PITCH_REDUCTION_FACTOR = 0.0005;
+    public static double PITCH_COMPENSATION_SIGN = 1.0;
 
     public static double FLYWHEEL_TARGET_RPM = 0;
     public static double TRANSFER_TARGET_RPM = 0;
@@ -140,7 +145,7 @@ public class IntegratedMechanismTuningTest extends LinearOpMode {
                 boolean flywheelOn = ARM && ENABLE_FLYWHEEL;
                 boolean intakeOn = ARM && ENABLE_INTAKE;
                 boolean transferOn = ARM && ENABLE_TRANSFER;
-                boolean gateOn = gamepad1.right_trigger > 0.5;
+                boolean gateOn = (ARM && ENABLE_GATE) || gamepad1.right_trigger > 0.5;
 
                 if (turretOn) {
                     turret.setTargetAngle(
@@ -155,7 +160,22 @@ public class IntegratedMechanismTuningTest extends LinearOpMode {
 
                 turret.updateState(turretOn);
 
-                double pitchTarget = pitchOn
+                double flywheelTarget = flywheelOn
+                        ? safeClip(
+                        FLYWHEEL_TARGET_RPM,
+                        0,
+                        Math.max(0, Double.isFinite(MAX_FLYWHEEL_RPM) ? MAX_FLYWHEEL_RPM : 0),
+                        0
+                )
+                        : 0;
+
+                flywheel.setTargetRPM(flywheelTarget);
+                flywheel.updateState();
+
+                double flywheelActual = flywheel.getCurrentRPM();
+                double flywheelError = flywheelTarget - flywheelActual;
+
+                double basePitchTarget = pitchOn
                         ? safeClip(
                         PITCH_TARGET_POSITION,
                         PITCH_MIN_POSITION,
@@ -164,29 +184,30 @@ public class IntegratedMechanismTuningTest extends LinearOpMode {
                 )
                         : PITCH_MIN_POSITION;
 
+                double pitchCompensation = 0.0;
+
+                if (pitchOn
+                        && flywheelOn
+                        && ENABLE_PITCH_COMPENSATION
+                        && flywheelError > FLYWHEEL_ERROR_THRESHOLD) {
+                    pitchCompensation = flywheelError
+                            * PITCH_REDUCTION_FACTOR
+                            * PITCH_COMPENSATION_SIGN;
+                }
+
+                double pitchTarget = safeClip(
+                        basePitchTarget + pitchCompensation,
+                        PITCH_MIN_POSITION,
+                        PITCH_MAX_POSITION,
+                        PITCH_MIN_POSITION
+                );
+
                 if (pitchOn) {
                     pitch.setTargetPosition(pitchTarget);
                     pitch.updateState();
                 } else {
                     hwMap.getPitchServo().setPosition(PITCH_MIN_POSITION);
                 }
-
-                double flywheelTarget = flywheelOn
-                        ? safeClip(
-                        FLYWHEEL_TARGET_RPM,
-                        0,
-                        Math.max(
-                                0,
-                                Double.isFinite(MAX_FLYWHEEL_RPM)
-                                        ? MAX_FLYWHEEL_RPM
-                                        : 0
-                        ),
-                        0
-                )
-                        : 0;
-
-                flywheel.setTargetRPM(flywheelTarget);
-                flywheel.updateState();
 
                 double intakeTarget = intakeOn ? INTAKE_RATED_RPM : 0;
 
@@ -227,7 +248,6 @@ public class IntegratedMechanismTuningTest extends LinearOpMode {
 
                 double intakeActual = intake.getRPM();
                 double transferActual = transfer.getRPM();
-                double flywheelActual = flywheel.getCurrentRPM();
                 double timeMs = runtime.milliseconds();
 
                 double turretAmps = hwMap.getTurretMotor()
@@ -275,6 +295,23 @@ public class IntegratedMechanismTuningTest extends LinearOpMode {
                 );
 
                 telemetry.addData(
+                        "Pitch base / compensation / commanded",
+                        "%.3f / %.3f / %.3f",
+                        basePitchTarget,
+                        pitchCompensation,
+                        pitchTarget
+                );
+
+                telemetry.addData(
+                        "Pitch compensation enabled / threshold / factor / sign",
+                        "%s / %.0f / %.6f / %.1f",
+                        ENABLE_PITCH_COMPENSATION,
+                        FLYWHEEL_ERROR_THRESHOLD,
+                        PITCH_REDUCTION_FACTOR,
+                        PITCH_COMPENSATION_SIGN
+                );
+
+                telemetry.addData(
                         "Pitch encoder angle",
                         "%.1f",
                         pitch.getEncoderAngle()
@@ -282,12 +319,9 @@ public class IntegratedMechanismTuningTest extends LinearOpMode {
 
                 telemetry.addData("Flywheel enabled", flywheelOn);
 
-                telemetry.addData(
-                        "Flywheel target / actual RPM",
-                        "%.0f / %.0f",
-                        flywheelTarget,
-                        flywheelActual
-                );
+                telemetry.addData("Flywheel Target RPM", flywheelTarget);
+                telemetry.addData("Flywheel Current RPM", flywheelActual);
+                telemetry.addData("Flywheel Error RPM", flywheelError);
 
                 telemetry.addData("Intake enabled", intakeOn);
 
